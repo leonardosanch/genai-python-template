@@ -1,0 +1,146 @@
+#!/bin/bash
+# Pre-push hook with Clean Architecture validation
+# Runs full test suite + coverage + architecture validation before allowing push.
+
+set -euo pipefail
+
+echo "🚀 Running pre-push checks..."
+echo ""
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Track failures
+CHECKS_FAILED=0
+
+# 1. Lint
+echo "🧹 Running linter..."
+if uv run ruff check src/ tests/ --quiet; then
+    echo -e "${GREEN}✓ Linting passed${NC}"
+else
+    echo -e "${RED}✗ Linting failed${NC}"
+    CHECKS_FAILED=1
+fi
+echo ""
+
+# 2. Type check
+echo "🔍 Running type checker..."
+if uv run mypy src/ --no-error-summary 2>/dev/null; then
+    echo -e "${GREEN}✓ Type checks passed${NC}"
+else
+    echo -e "${RED}✗ Type checks failed${NC}"
+    CHECKS_FAILED=1
+fi
+echo ""
+
+# 3. Unit tests with coverage
+echo "📊 Running test suite with coverage..."
+if uv run pytest tests/unit/ --tb=short -q --cov=src --cov-report=term-missing --cov-fail-under=80; then
+    echo -e "${GREEN}✓ Tests passed (coverage ≥ 80%)${NC}"
+else
+    echo -e "${RED}✗ Tests failed or coverage below 80%${NC}"
+    CHECKS_FAILED=1
+fi
+echo ""
+
+# 4. Architecture validation (NEW)
+echo "🏗️  Validating Clean Architecture rules..."
+ARCH_VALIDATION=$(uv run python -c "
+from pathlib import Path
+import ast
+import sys
+
+# Define layer dependency rules
+LAYER_RULES = {
+    'domain': [],  # domain can't import from other layers
+    'application': ['domain'],
+    'infrastructure': ['domain', 'application'],
+    'interfaces': ['domain', 'application'],
+}
+
+# Forbidden imports in domain layer
+FORBIDDEN_IN_DOMAIN = [
+    'fastapi', 'sqlalchemy', 'redis', 'httpx', 'celery',
+    'boto3', 'google.cloud', 'azure', 'openai', 'anthropic',
+]
+
+errors = []
+
+for py_file in Path('src').rglob('*.py'):
+    parts = py_file.parts
+    if len(parts) < 2:
+        continue
+    
+    layer = parts[1] if parts[0] == 'src' else None
+    if layer not in LAYER_RULES or py_file.name == '__init__.py':
+        continue
+    
+    try:
+        content = py_file.read_text()
+        tree = ast.parse(content)
+    except (SyntaxError, UnicodeDecodeError):
+        continue
+    
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            module = node.module if isinstance(node, ast.ImportFrom) else None
+            names = [alias.name for alias in node.names]
+            
+            # Check layer violations
+            for other_layer in ['domain', 'application', 'infrastructure', 'interfaces']:
+                if other_layer not in LAYER_RULES.get(layer, []) and other_layer != layer:
+                    if module and f'src.{other_layer}' in module:
+                        errors.append(f'{py_file}: {layer} imports from {other_layer}')
+            
+            # Check forbidden imports in domain
+            if layer == 'domain':
+                for forbidden in FORBIDDEN_IN_DOMAIN:
+                    if module and forbidden in module.lower():
+                        errors.append(f'{py_file}: domain imports {forbidden}')
+
+if errors:
+    print('VIOLATIONS')
+    for e in errors:
+        print(f'  - {e}')
+    sys.exit(1)
+else:
+    print('OK')
+" 2>&1)
+
+if echo "$ARCH_VALIDATION" | grep -q "^OK"; then
+    echo -e "${GREEN}✓ Architecture validation passed${NC}"
+elif echo "$ARCH_VALIDATION" | grep -q "VIOLATIONS"; then
+    echo -e "${RED}✗ Architecture violations found:${NC}"
+    echo "$ARCH_VALIDATION" | grep "  -" | while read line; do
+        echo -e "${RED}$line${NC}"
+    done
+    CHECKS_FAILED=1
+else
+    echo -e "${YELLOW}⚠ Architecture validation skipped${NC}"
+fi
+echo ""
+
+# 5. Security check
+echo "🔒 Checking for hardcoded secrets..."
+if grep -rn --include="*.py" -E "(password|secret|api_key)\s*=\s*['\"][^'\"]+['\"]" src/ 2>/dev/null | grep -v "# pragma: allowlist secret" | grep -v "test_" | head -1; then
+    echo -e "${RED}✗ Possible hardcoded secrets found${NC}"
+    CHECKS_FAILED=1
+else
+    echo -e "${GREEN}✓ No hardcoded secrets detected${NC}"
+fi
+echo ""
+
+# Final result
+echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+if [ $CHECKS_FAILED -eq 0 ]; then
+    echo -e "${GREEN}✅ All pre-push checks passed!${NC}"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    exit 0
+else
+    echo -e "${RED}❌ Some checks failed. Fix issues before pushing.${NC}"
+    echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    exit 1
+fi

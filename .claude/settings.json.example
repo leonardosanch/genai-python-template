@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@anthropic/mcp-filesystem", "/path/to/allowed/dir"],
+      "description": "Read/write access to a specific directory"
+    },
+    "postgres": {
+      "command": "npx",
+      "args": ["-y", "@anthropic/mcp-postgres"],
+      "env": {
+        "DATABASE_URL": "postgresql://user:password@localhost:5432/dbname"
+      },
+      "description": "Query PostgreSQL database"
+    },
+    "custom-tools": {
+      "command": "uv",
+      "args": ["run", "python", "src/infrastructure/mcp/server.py"],
+      "description": "Project-specific MCP tools"
+    }
+  }
+}

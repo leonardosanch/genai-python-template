@@ -1,0 +1,35 @@
+
+name: Validate Skill Examples
+
+on:
+  push:
+    paths:
+      - 'docs/skills/examples/**'
+      - 'tests/skills/**'
+      - '.github/workflows/validate_skills.yml'
+  pull_request:
+    paths:
+      - 'docs/skills/examples/**'
+
+jobs:
+  test-examples:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v1
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          uv venv
+          uv pip install pytest pytest-asyncio prometheus-client opentelemetry-api opentelemetry-sdk pydantic numpy scikit-learn
+
+      - name: Run Skill Tests
+        run: |
+          uv run pytest tests/skills/ -v

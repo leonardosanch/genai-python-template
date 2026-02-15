@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: genai-app-config
+  namespace: genai-app
+data:
+  APP_ENV: "staging"
+  LOG_LEVEL: "INFO"
+  AllowedHosts: "*"

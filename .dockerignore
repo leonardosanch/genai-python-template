@@ -1,0 +1,21 @@
+# .dockerignore
+.git
+.github
+.venv
+.claude
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.DS_Store
+.mypy_cache
+.pytest_cache
+.ruff_cache
+.env
+.env.*
+local_data/
+logs/
+tests/
+docs/
+deploy/
+*.md

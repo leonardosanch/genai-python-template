@@ -1,0 +1,31 @@
+#!/bin/bash
+# Pre-commit hook for Claude Agent
+# This script runs basic checks before allowing a task to be marked complete.
+
+echo "🛡️ Running Safety Checks..."
+
+# 1. Check for hardcoded secrets (Basic grep)
+echo "🔍 Checking for secrets..."
+if grep -rE "password\s*=\s*['\"][^'\"]+['\"]" src/; then
+    echo "❌ POTENTIAL SECRET FOUND! Please use environment variables."
+    exit 1
+fi
+
+# 2. Run Ruff Linting
+echo "🧹 Running Linter..."
+uv run ruff check src/
+if [ $? -ne 0 ]; then
+    echo "❌ Linting failed. Please fix errors before proceeding."
+    exit 1
+fi
+
+# 3. Run Type Checking
+echo "🔍 Checking types..."
+uv run mypy src/
+if [ $? -ne 0 ]; then
+    echo "❌ Type check failed. Please fix type errors."
+    exit 1
+fi
+
+echo "✅ All checks passed! You are safe to proceed."
+exit 0

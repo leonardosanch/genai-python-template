@@ -1,0 +1,71 @@
+steps:
+  # Build container image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/agent-service:$COMMIT_SHA'
+      - '-t'
+      - 'gcr.io/$PROJECT_ID/agent-service:latest'
+      - '-f'
+      - 'deploy/gcp/Dockerfile'
+      - '.'
+  
+  # Push to Container Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'gcr.io/$PROJECT_ID/agent-service:$COMMIT_SHA'
+  
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - 'gcr.io/$PROJECT_ID/agent-service:latest'
+  
+  # Deploy to Cloud Run
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'run'
+      - 'deploy'
+      - 'agent-service'
+      - '--image=gcr.io/$PROJECT_ID/agent-service:$COMMIT_SHA'
+      - '--region=us-central1'
+      - '--platform=managed'
+      - '--allow-unauthenticated'  # Change to --no-allow-unauthenticated for IAP
+      - '--min-instances=0'  # Scale to zero
+      - '--max-instances=10'
+      - '--memory=512Mi'
+      - '--cpu=1'
+      - '--timeout=60s'
+      - '--concurrency=80'
+      - '--set-env-vars=GCP_PROJECT=$PROJECT_ID,GCP_LOCATION=us-central1'
+  
+  # Create Firestore database (if not exists)
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: bash
+    args:
+      - '-c'
+      - |
+        gcloud firestore databases create --location=us-central1 || true
+  
+  # Create Cloud Tasks queue (if not exists)
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: bash
+    args:
+      - '-c'
+      - |
+        gcloud tasks queues create agent-tasks --location=us-central1 || true
+
+# Store images in Container Registry
+images:
+  - 'gcr.io/$PROJECT_ID/agent-service:$COMMIT_SHA'
+  - 'gcr.io/$PROJECT_ID/agent-service:latest'
+
+# Build options
+options:
+  machineType: 'N1_HIGHCPU_8'
+  logging: CLOUD_LOGGING_ONLY
+
+# Timeout
+timeout: '1200s'

@@ -1,0 +1,10 @@
+# Copy this file to terraform.tfvars and fill in your values
+aws_region     = "us-east-1"
+environment    = "development"
+app_name       = "genai-app"
+vpc_cidr       = "10.0.0.0/16"
+container_image = "ghcr.io/your-org/genai-app:latest"
+container_cpu    = 256
+container_memory = 512
+desired_count    = 1
+db_instance_class = "db.t3.micro"

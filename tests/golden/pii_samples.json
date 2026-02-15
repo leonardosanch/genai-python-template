@@ -1,0 +1,42 @@
+[
+  {
+    "input": "Contact me at john.doe@example.com for details",
+    "contains_pii": true,
+    "pii_types": ["email"]
+  },
+  {
+    "input": "My SSN is 123-45-6789",
+    "contains_pii": true,
+    "pii_types": ["ssn"]
+  },
+  {
+    "input": "Call me at 555-123-4567",
+    "contains_pii": true,
+    "pii_types": ["phone"]
+  },
+  {
+    "input": "Card number: 4111 1111 1111 1111",
+    "contains_pii": true,
+    "pii_types": ["credit_card"]
+  },
+  {
+    "input": "API key: sk-abcdefghij1234567890abcdefghij",
+    "contains_pii": true,
+    "pii_types": ["api_key"]
+  },
+  {
+    "input": "Server IP: 8.8.8.8",
+    "contains_pii": true,
+    "pii_types": ["ip_address"]
+  },
+  {
+    "input": "The weather today is sunny with a high of 75 degrees.",
+    "contains_pii": false,
+    "pii_types": []
+  },
+  {
+    "input": "Local server at 192.168.1.100",
+    "contains_pii": false,
+    "pii_types": []
+  }
+]

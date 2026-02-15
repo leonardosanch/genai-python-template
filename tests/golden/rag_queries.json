@@ -1,0 +1,42 @@
+[
+  {
+    "query": "What is the capital of France?",
+    "expected_answer": "Paris",
+    "context": [
+      "France is a country in Western Europe. Its capital city is Paris, which is also the largest city in France.",
+      "Paris has been the capital of France since the 10th century."
+    ]
+  },
+  {
+    "query": "What language is spoken in Brazil?",
+    "expected_answer": "Portuguese",
+    "context": [
+      "Brazil is the largest country in South America. The official language of Brazil is Portuguese.",
+      "Portuguese was brought to Brazil by Portuguese colonizers in the 16th century."
+    ]
+  },
+  {
+    "query": "What is photosynthesis?",
+    "expected_answer": "Photosynthesis is the process by which plants convert sunlight into energy",
+    "context": [
+      "Photosynthesis is a biological process where plants, algae, and some bacteria convert light energy into chemical energy.",
+      "During photosynthesis, carbon dioxide and water are converted into glucose and oxygen using sunlight."
+    ]
+  },
+  {
+    "query": "Who wrote Romeo and Juliet?",
+    "expected_answer": "William Shakespeare",
+    "context": [
+      "Romeo and Juliet is a tragedy written by William Shakespeare early in his career.",
+      "The play was first published in 1597 and is one of Shakespeare's most popular works."
+    ]
+  },
+  {
+    "query": "What is the speed of light?",
+    "expected_answer": "approximately 299,792,458 meters per second",
+    "context": [
+      "The speed of light in a vacuum is exactly 299,792,458 metres per second.",
+      "Light travels at this constant speed regardless of the motion of the source or observer."
+    ]
+  }
+]
