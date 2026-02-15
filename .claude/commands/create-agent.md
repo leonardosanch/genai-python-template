@@ -3,8 +3,8 @@ description: Scaffold LangGraph agent (state, nodes, graph, bounded loops)
 ---
 
 1. Ask the user for: agent name, purpose, and list of tools/capabilities.
-2. Read [docs/skills/multi_agent_systems.md](file:///home/leo/templates/genai-python-template/docs/skills/multi_agent_systems.md) for agent patterns.
-3. Read [docs/skills/genai_rag.md](file:///home/leo/templates/genai-python-template/docs/skills/genai_rag.md) if the agent involves retrieval.
+2. Read `docs/skills/multi_agent_systems.md` for agent patterns.
+3. Read `docs/skills/genai_rag.md` if the agent involves retrieval.
 4. Create the following files:
 
    **a. Agent State**

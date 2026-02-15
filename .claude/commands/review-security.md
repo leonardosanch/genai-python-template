@@ -9,7 +9,7 @@ description: Perform a security review of the current file using OWASP Top 10 an
     -   **Insecure Deserialization** (pickle, yaml)
     -   **Insufficient Logging/Monitoring**
 
-2.  **Consult the Security Skill**: Read [docs/skills/security.md](file:///home/leo/templates/genai-python-template/docs/skills/security.md) for specific checklists.
+2.  **Consult the Security Skill**: Read `docs/skills/security.md` for specific checklists.
 
 3.  **Check for Python-specific issues**:
     -   Use of `eval()`, `exec()`, or `subprocess` without validation.

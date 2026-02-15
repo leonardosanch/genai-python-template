@@ -396,6 +396,14 @@ When working on related tasks, **you must consult these resources**:
 - OAuth2 flows, httpx client, circuit breakers, webhooks, token management.
 - Resilient external API integration patterns.
 
+### [Performance Profiling]($SKILLS_DIR/performance_profiling.md)
+- Python profiling (py-spy, scalene, memray), load testing (Locust, k6), async monitoring.
+- LLM performance optimization, PostgreSQL query profiling, benchmarking.
+
+### [Design Patterns]($SKILLS_DIR/design_patterns.md)
+- GoF patterns applied to Python backend and GenAI systems.
+- Adapter, Strategy, Factory, Decorator, Proxy, Observer, Command, Chain of Responsibility.
+
 ---
 
 ## Final Rule
@@ -412,7 +420,7 @@ echo ""
 echo -e "${GREEN}Global Claude Code configuration installed successfully.${NC}"
 echo ""
 echo "  File:   $CLAUDE_MD"
-echo "  Skills: $SKILLS_DIR (24 skills)"
+echo "  Skills: $SKILLS_DIR (26 skills)"
 echo ""
 echo -e "Claude Code will now load these rules in ${GREEN}every project${NC} on this machine."
 echo ""

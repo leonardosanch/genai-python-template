@@ -9,9 +9,9 @@ description: Scaffold complete RAG pipeline (ingestion + retrieval + generation)
    - Chunking strategy (recursive, semantic, fixed)
    - Reranking (yes/no)
 
-2. Read [docs/skills/genai_rag.md](file:///home/leo/genai-python-template/docs/skills/genai_rag.md) for RAG patterns.
+2. Read `docs/skills/genai_rag.md` for RAG patterns.
 
-3. Read [docs/skills/databases.md](file:///home/leo/genai-python-template/docs/skills/databases.md) for vector store guidance.
+3. Read `docs/skills/databases.md` for vector store guidance.
 
 4. Create the following files:
 

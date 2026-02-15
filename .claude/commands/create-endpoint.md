@@ -3,8 +3,8 @@ description: Scaffold FastAPI endpoint (route + DTO + use case) following Clean 
 ---
 
 1. Ask the user for: resource name, HTTP method(s), and brief description of the endpoint's purpose.
-2. Read [docs/skills/api_streaming.md](file:///home/leo/templates/genai-python-template/docs/skills/api_streaming.md) for API patterns.
-3. Read [docs/skills/software_architecture.md](file:///home/leo/templates/genai-python-template/docs/skills/software_architecture.md) for layer rules.
+2. Read `docs/skills/api_streaming.md` for API patterns.
+3. Read `docs/skills/software_architecture.md` for layer rules.
 4. Create or update the following files:
 
    **a. DTO (request/response schemas)**

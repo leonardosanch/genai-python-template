@@ -3,7 +3,7 @@ description: Scaffold test file for a source file (mocks async, fixtures, layer-
 ---
 
 1. Read the source file provided by the user (e.g., `src/application/services/my_service.py`).
-2. Read [docs/skills/testing_quality.md](file:///home/leo/templates/genai-python-template/docs/skills/testing_quality.md) for testing patterns.
+2. Read `docs/skills/testing_quality.md` for testing patterns.
 3. Determine the architectural layer (`domain`, `application`, `infrastructure`, `interfaces`) from the file path.
 4. Generate a test file at the corresponding path under `tests/unit/` mirroring the source structure.
 5. Apply layer-specific conventions:

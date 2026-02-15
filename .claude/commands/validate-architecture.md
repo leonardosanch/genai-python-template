@@ -2,7 +2,7 @@
 description: Validate Clean Architecture dependency rules across src/
 ---
 
-1. Read [docs/skills/software_architecture.md](file:///home/leo/templates/genai-python-template/docs/skills/software_architecture.md) for architecture rules.
+1. Read `docs/skills/software_architecture.md` for architecture rules.
 2. Scan all Python files under `src/` and check these dependency rules:
 
    **Allowed dependencies (inner -> outer is FORBIDDEN):**
