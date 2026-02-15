@@ -285,6 +285,605 @@ Reusable templates for different use cases:
 
 ---
 
+## Code Examples
+
+### Example 1: Semantic Blueprint Builder
+
+```python
+# src/application/context/semantic_blueprint.py
+from __future__ import annotations
+
+from enum import Enum
+from typing import Any
+
+from pydantic import BaseModel, Field
+
+
+class SemanticRole(str, Enum):
+    AGENT = "agent"       # ARG0 — entity performing the action
+    PATIENT = "patient"   # ARG1 — entity affected by the action
+    RECIPIENT = "recipient"  # ARG2 — entity receiving the result
+    SOURCE = "source"     # source of information
+    INSTRUMENT = "instrument"  # tool or method used
+
+
+class Participant(BaseModel):
+    name: str
+    role: SemanticRole
+    description: str = ""
+
+
+class ArgumentModifier(BaseModel):
+    temporal: str | None = None    # ARGM-TMP: when
+    location: str | None = None    # ARGM-LOC: where
+    manner: str | None = None      # ARGM-MNR: how
+    purpose: str | None = None     # ARGM-PRP: why
+    condition: str | None = None   # ARGM-ADV: under what conditions
+
+
+class SemanticBlueprint(BaseModel):
+    """Level 5 context structure based on SRL (Semantic Role Labeling)."""
+
+    scene_goal: str = Field(..., description="What the output must achieve")
+    participants: list[Participant] = Field(default_factory=list)
+    predicate: str = Field(..., description="Central action verb")
+    action_to_complete: str = Field(..., description="Full action: predicate + agent + patient")
+    modifiers: ArgumentModifier = Field(default_factory=ArgumentModifier)
+    constraints: list[str] = Field(default_factory=list)
+    output_format: str = "text"
+
+    def to_system_prompt(self) -> str:
+        """Convert blueprint to structured system prompt."""
+        parts = [
+            f"## Goal\n{self.scene_goal}",
+            f"\n## Action\n{self.action_to_complete}",
+        ]
+        if self.participants:
+            roles = "\n".join(
+                f"- **{p.name}** ({p.role.value}): {p.description}"
+                for p in self.participants
+            )
+            parts.append(f"\n## Participants\n{roles}")
+        if self.modifiers.temporal:
+            parts.append(f"\n## Temporal Context\n{self.modifiers.temporal}")
+        if self.modifiers.manner:
+            parts.append(f"\n## Approach\n{self.modifiers.manner}")
+        if self.constraints:
+            rules = "\n".join(f"- {c}" for c in self.constraints)
+            parts.append(f"\n## Constraints\n{rules}")
+        parts.append(f"\n## Output Format\n{self.output_format}")
+        return "\n".join(parts)
+
+
+# Usage
+blueprint = SemanticBlueprint(
+    scene_goal="Generate a technical architecture review",
+    predicate="review",
+    action_to_complete="Review the microservices architecture for scalability issues",
+    participants=[
+        Participant(name="Architect Agent", role=SemanticRole.AGENT, description="Performs the review"),
+        Participant(name="System Design", role=SemanticRole.PATIENT, description="Architecture under review"),
+        Participant(name="Engineering Team", role=SemanticRole.RECIPIENT, description="Receives the report"),
+    ],
+    modifiers=ArgumentModifier(
+        manner="Focus on horizontal scaling, data consistency, and failure modes",
+        purpose="Identify bottlenecks before production launch",
+    ),
+    constraints=[
+        "Must reference concrete code patterns, not generic advice",
+        "Cite specific services and their interactions",
+        "Include severity ratings (Critical/High/Medium/Low)",
+    ],
+    output_format="Markdown report with sections: Summary, Findings, Recommendations",
+)
+```
+
+### Example 2: Context Engine with Execution Tracer
+
+```python
+# src/application/context/engine.py
+from __future__ import annotations
+
+import time
+import uuid
+from dataclasses import dataclass, field
+from typing import Any, Protocol
+
+from pydantic import BaseModel
+
+
+class AgentResult(BaseModel):
+    agent_name: str
+    output: str
+    tokens_used: int = 0
+    duration_ms: float = 0
+
+
+class TraceStep(BaseModel):
+    step_id: str
+    agent_name: str
+    input_summary: str
+    output_summary: str
+    tokens_used: int
+    duration_ms: float
+    timestamp: float
+
+
+class ExecutionTrace(BaseModel):
+    trace_id: str
+    goal: str
+    steps: list[TraceStep] = []
+    total_tokens: int = 0
+    total_duration_ms: float = 0
+
+    def add_step(self, step: TraceStep) -> None:
+        self.steps.append(step)
+        self.total_tokens += step.tokens_used
+        self.total_duration_ms += step.duration_ms
+
+
+class ContextAgent(Protocol):
+    """Protocol for all context engine agents."""
+
+    @property
+    def name(self) -> str: ...
+
+    async def execute(self, context: dict[str, Any]) -> AgentResult: ...
+
+
+class AgentRegistry:
+    """Central registry mapping agent names to implementations."""
+
+    def __init__(self) -> None:
+        self._agents: dict[str, ContextAgent] = {}
+
+    def register(self, agent: ContextAgent) -> None:
+        self._agents[agent.name] = agent
+
+    def get(self, name: str) -> ContextAgent:
+        if name not in self._agents:
+            raise KeyError(f"Agent '{name}' not registered. Available: {list(self._agents)}")
+        return self._agents[name]
+
+    @property
+    def available_agents(self) -> list[str]:
+        return list(self._agents.keys())
+
+
+class ContextEngine:
+    """Glass-box context engine with full execution tracing."""
+
+    def __init__(self, registry: AgentRegistry, token_budget: int = 8000) -> None:
+        self._registry = registry
+        self._token_budget = token_budget
+
+    async def execute_plan(
+        self,
+        goal: str,
+        plan: list[dict[str, Any]],
+    ) -> tuple[str, ExecutionTrace]:
+        trace = ExecutionTrace(
+            trace_id=str(uuid.uuid4()),
+            goal=goal,
+        )
+        context: dict[str, Any] = {"goal": goal}
+
+        for step_def in plan:
+            agent_name = step_def["agent"]
+            agent = self._registry.get(agent_name)
+
+            start = time.perf_counter()
+            result = await agent.execute(context)
+            duration_ms = (time.perf_counter() - start) * 1000
+
+            # Check token budget
+            if trace.total_tokens + result.tokens_used > self._token_budget:
+                summarizer = self._registry.get("summarizer")
+                context["previous_output"] = result.output
+                summary_result = await summarizer.execute(context)
+                result = summary_result
+
+            trace_step = TraceStep(
+                step_id=str(uuid.uuid4()),
+                agent_name=agent_name,
+                input_summary=str(context.get("goal", ""))[:200],
+                output_summary=result.output[:200],
+                tokens_used=result.tokens_used,
+                duration_ms=duration_ms,
+                timestamp=time.time(),
+            )
+            trace.add_step(trace_step)
+
+            # Chain output to next step
+            context[f"{agent_name}_output"] = result.output
+            context["previous_output"] = result.output
+
+        final_output = context.get("previous_output", "")
+        return str(final_output), trace
+```
+
+### Example 3: Dual RAG Retriever (Procedural + Factual)
+
+```python
+# src/infrastructure/rag/dual_retriever.py
+from __future__ import annotations
+
+from enum import Enum
+from typing import Any
+
+from pydantic import BaseModel, Field
+
+
+class RetrievalType(str, Enum):
+    PROCEDURAL = "procedural"  # HOW — style guides, templates, blueprints
+    FACTUAL = "factual"        # WHAT — documents, data, research
+
+
+class RetrievedChunk(BaseModel):
+    content: str
+    source: str
+    retrieval_type: RetrievalType
+    score: float
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class DualRAGRetriever:
+    """Separate retrieval for procedural (HOW) and factual (WHAT) context.
+
+    Uses separate namespaces/collections to prevent cross-contamination
+    between style/process knowledge and factual knowledge.
+    """
+
+    def __init__(
+        self,
+        vector_store: Any,  # VectorStorePort
+        procedural_namespace: str = "context_library",
+        factual_namespace: str = "knowledge_base",
+        top_k: int = 5,
+    ) -> None:
+        self._store = vector_store
+        self._procedural_ns = procedural_namespace
+        self._factual_ns = factual_namespace
+        self._top_k = top_k
+
+    async def retrieve_procedural(self, query: str) -> list[RetrievedChunk]:
+        """Retrieve HOW-TO context: style guides, templates, process docs."""
+        results = await self._store.similarity_search(
+            query=query,
+            namespace=self._procedural_ns,
+            top_k=self._top_k,
+        )
+        return [
+            RetrievedChunk(
+                content=r["content"],
+                source=r["metadata"].get("source", "unknown"),
+                retrieval_type=RetrievalType.PROCEDURAL,
+                score=r["score"],
+                metadata=r["metadata"],
+            )
+            for r in results
+        ]
+
+    async def retrieve_factual(self, query: str) -> list[RetrievedChunk]:
+        """Retrieve WHAT context: documents, data, research findings."""
+        results = await self._store.similarity_search(
+            query=query,
+            namespace=self._factual_ns,
+            top_k=self._top_k,
+        )
+        return [
+            RetrievedChunk(
+                content=r["content"],
+                source=r["metadata"].get("source", "unknown"),
+                retrieval_type=RetrievalType.FACTUAL,
+                score=r["score"],
+                metadata=r["metadata"],
+            )
+            for r in results
+        ]
+
+    async def retrieve_both(self, query: str) -> dict[str, list[RetrievedChunk]]:
+        """Retrieve from both namespaces in parallel."""
+        import asyncio
+
+        procedural, factual = await asyncio.gather(
+            self.retrieve_procedural(query),
+            self.retrieve_factual(query),
+        )
+        return {
+            "procedural": procedural,
+            "factual": factual,
+        }
+```
+
+### Example 4: Context Chaining Pipeline
+
+```python
+# src/application/context/chaining.py
+from __future__ import annotations
+
+import logging
+from typing import Any, Callable, Awaitable
+
+from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
+
+
+class ChainStep(BaseModel):
+    name: str
+    description: str
+    input_keys: list[str] = []
+    output_key: str = "output"
+
+
+class ContextChain:
+    """Multi-step context chaining where each step's output feeds the next.
+
+    Replaces monolithic prompts with focused, debuggable steps.
+    Each step has a clear goal and produces a specific output.
+    """
+
+    def __init__(self) -> None:
+        self._steps: list[tuple[ChainStep, Callable[..., Awaitable[str]]]] = []
+
+    def add_step(
+        self,
+        step: ChainStep,
+        executor: Callable[..., Awaitable[str]],
+    ) -> "ContextChain":
+        self._steps.append((step, executor))
+        return self
+
+    async def run(self, initial_context: dict[str, Any]) -> dict[str, Any]:
+        """Execute chain step by step, building context progressively."""
+        context = dict(initial_context)
+
+        for i, (step, executor) in enumerate(self._steps):
+            logger.info(f"Chain step {i + 1}/{len(self._steps)}: {step.name}")
+
+            # Extract only needed inputs for this step
+            step_input = {k: context[k] for k in step.input_keys if k in context}
+
+            try:
+                result = await executor(**step_input)
+                context[step.output_key] = result
+                logger.info(
+                    f"Step '{step.name}' completed — output key: {step.output_key} "
+                    f"({len(result)} chars)"
+                )
+            except Exception as e:
+                logger.error(f"Step '{step.name}' failed: {e}")
+                context[f"{step.output_key}_error"] = str(e)
+                raise
+
+        return context
+
+
+# Usage: Research → Analyze → Write pipeline
+async def build_research_chain(llm_client: Any) -> ContextChain:
+    chain = ContextChain()
+
+    async def research(goal: str) -> str:
+        return await llm_client.generate(
+            f"Research the following topic thoroughly:\n{goal}\n\n"
+            "Return key findings with sources."
+        )
+
+    async def analyze(goal: str, research_output: str) -> str:
+        return await llm_client.generate(
+            f"Goal: {goal}\n\nResearch findings:\n{research_output}\n\n"
+            "Analyze these findings. Identify patterns, contradictions, and gaps."
+        )
+
+    async def write(goal: str, analysis_output: str) -> str:
+        return await llm_client.generate(
+            f"Goal: {goal}\n\nAnalysis:\n{analysis_output}\n\n"
+            "Write a clear, structured report based on this analysis."
+        )
+
+    chain.add_step(
+        ChainStep(name="Research", input_keys=["goal"], output_key="research_output"),
+        research,
+    ).add_step(
+        ChainStep(name="Analyze", input_keys=["goal", "research_output"], output_key="analysis_output"),
+        analyze,
+    ).add_step(
+        ChainStep(name="Write", input_keys=["goal", "analysis_output"], output_key="final_report"),
+        write,
+    )
+    return chain
+```
+
+### Example 5: Token Budget Manager
+
+```python
+# src/application/context/token_budget.py
+from __future__ import annotations
+
+import tiktoken
+from pydantic import BaseModel, Field
+
+
+class TokenBudget(BaseModel):
+    """Per-agent token budget with tracking and alerts."""
+
+    max_tokens: int = Field(default=4000, description="Maximum tokens for this agent")
+    used_tokens: int = 0
+    warning_threshold: float = Field(default=0.8, description="Warn at this usage ratio")
+
+    @property
+    def remaining(self) -> int:
+        return max(0, self.max_tokens - self.used_tokens)
+
+    @property
+    def usage_ratio(self) -> float:
+        return self.used_tokens / self.max_tokens if self.max_tokens > 0 else 1.0
+
+    @property
+    def needs_summarization(self) -> bool:
+        return self.usage_ratio >= self.warning_threshold
+
+    def consume(self, tokens: int) -> None:
+        self.used_tokens += tokens
+
+    def would_exceed(self, tokens: int) -> bool:
+        return (self.used_tokens + tokens) > self.max_tokens
+
+
+class TokenCounter:
+    """Count tokens using tiktoken for accurate budgeting."""
+
+    def __init__(self, model: str = "gpt-4") -> None:
+        try:
+            self._encoder = tiktoken.encoding_for_model(model)
+        except KeyError:
+            self._encoder = tiktoken.get_encoding("cl100k_base")
+
+    def count(self, text: str) -> int:
+        return len(self._encoder.encode(text))
+
+    def truncate_to_budget(self, text: str, max_tokens: int) -> str:
+        """Truncate text to fit within token budget."""
+        tokens = self._encoder.encode(text)
+        if len(tokens) <= max_tokens:
+            return text
+        return self._encoder.decode(tokens[:max_tokens])
+
+
+class BudgetManager:
+    """Manage token budgets across all agents in a context engine run."""
+
+    def __init__(self, total_budget: int = 16000) -> None:
+        self._total_budget = total_budget
+        self._counter = TokenCounter()
+        self._agent_budgets: dict[str, TokenBudget] = {}
+
+    def allocate(self, agent_name: str, max_tokens: int) -> TokenBudget:
+        budget = TokenBudget(max_tokens=max_tokens)
+        self._agent_budgets[agent_name] = budget
+        return budget
+
+    def consume(self, agent_name: str, text: str) -> int:
+        tokens = self._counter.count(text)
+        if agent_name in self._agent_budgets:
+            self._agent_budgets[agent_name].consume(tokens)
+        return tokens
+
+    @property
+    def total_used(self) -> int:
+        return sum(b.used_tokens for b in self._agent_budgets.values())
+
+    @property
+    def agents_needing_summarization(self) -> list[str]:
+        return [
+            name for name, budget in self._agent_budgets.items()
+            if budget.needs_summarization
+        ]
+```
+
+### Example 6: Specialist Agent Implementation
+
+```python
+# src/application/context/agents.py
+from __future__ import annotations
+
+from typing import Any
+
+from src.application.context.engine import AgentResult, ContextAgent
+
+
+class ResearcherAgent:
+    """Retrieves factual knowledge via RAG with source citations."""
+
+    def __init__(self, llm_client: Any, retriever: Any) -> None:
+        self._llm = llm_client
+        self._retriever = retriever
+
+    @property
+    def name(self) -> str:
+        return "researcher"
+
+    async def execute(self, context: dict[str, Any]) -> AgentResult:
+        goal = context.get("goal", "")
+
+        # Retrieve factual knowledge
+        chunks = await self._retriever.retrieve_factual(goal)
+        sources = "\n".join(
+            f"[{c.source}]: {c.content}" for c in chunks
+        )
+
+        prompt = (
+            f"Research goal: {goal}\n\n"
+            f"Available sources:\n{sources}\n\n"
+            "Synthesize findings with inline citations [source_name]. "
+            "Only use information from the provided sources."
+        )
+        response = await self._llm.generate(prompt)
+        return AgentResult(
+            agent_name=self.name,
+            output=response,
+            tokens_used=len(response.split()) * 2,  # Approximate
+        )
+
+
+class SummarizerAgent:
+    """Proactive context reduction to manage token overhead."""
+
+    def __init__(self, llm_client: Any, max_output_tokens: int = 500) -> None:
+        self._llm = llm_client
+        self._max_output_tokens = max_output_tokens
+
+    @property
+    def name(self) -> str:
+        return "summarizer"
+
+    async def execute(self, context: dict[str, Any]) -> AgentResult:
+        text = context.get("previous_output", "")
+
+        prompt = (
+            "Summarize the following content preserving all key facts, "
+            "decisions, and actionable items. Remove redundancy and filler.\n\n"
+            f"Content:\n{text}\n\n"
+            f"Maximum summary length: {self._max_output_tokens} tokens."
+        )
+        response = await self._llm.generate(prompt)
+        return AgentResult(
+            agent_name=self.name,
+            output=response,
+            tokens_used=len(response.split()) * 2,
+        )
+
+
+class ContextLibrarianAgent:
+    """Retrieves procedural context: style guides, templates, blueprints."""
+
+    def __init__(self, llm_client: Any, retriever: Any) -> None:
+        self._llm = llm_client
+        self._retriever = retriever
+
+    @property
+    def name(self) -> str:
+        return "context_librarian"
+
+    async def execute(self, context: dict[str, Any]) -> AgentResult:
+        goal = context.get("goal", "")
+
+        # Retrieve procedural (HOW-TO) knowledge
+        chunks = await self._retriever.retrieve_procedural(goal)
+        guidelines = "\n".join(
+            f"- [{c.source}]: {c.content}" for c in chunks
+        )
+
+        return AgentResult(
+            agent_name=self.name,
+            output=f"## Applicable Guidelines\n{guidelines}",
+            tokens_used=len(guidelines.split()) * 2,
+        )
+```
+
+---
+
 ## External Resources
 
 - **Book**: *Context Engineering for Multi-Agent Systems* — Denis Rothman (Packt, Nov 2025)

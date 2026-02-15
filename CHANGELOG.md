@@ -19,6 +19,9 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - New external resources: FinOps Foundation, AWS DR Whitepaper, Landing Zone Accelerator, Migration Hub
 
 ### Changed
+- Enriched context_engineering.md from 367 to 966 lines — added 6 code examples (Semantic Blueprint builder, Context Engine with Execution Tracer, Dual RAG retriever, Context Chaining pipeline, Token Budget Manager, Specialist Agents)
+- Enriched api_streaming.md from 370 to 942 lines — added 8 code examples (SSE LLM streaming, WebSocket chat with heartbeat, Redis rate limiter, dependency injection, background tasks, health checks, graceful shutdown, authenticated endpoints), 4 new anti-patterns
+- Enriched testing_quality.md from 469 to 1160 lines — added 7 code examples (conftest.py fixtures, async agent testing, RAGAS evaluation in CI, prompt snapshot testing, testcontainers, authenticated endpoint testing), 4 new anti-patterns, CI quality gate configuration
 - Expanded cloud infrastructure skill from 425 to 898 lines
 - Updated skill count from 15 to 26 in documentation
 - Registered Performance Profiling in CLAUDE.md (table + documentation index + global CLAUDE.md)
