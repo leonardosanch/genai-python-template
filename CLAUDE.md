@@ -754,6 +754,7 @@ Curated skill files with project-specific knowledge. **Read the relevant skill b
 | External Integrations | `docs/skills/external_integrations.md` | OAuth2, httpx, circuit-breaker, webhooks, tokens | ✅ Estable |
 | Performance Profiling | `docs/skills/performance_profiling.md` | py-spy, scalene, memray, locust, query-profiling, LLM-perf | ✅ Estable |
 | Design Patterns | `docs/skills/design_patterns.md` | GoF, Adapter, Strategy, Factory, Decorator, Proxy, Observer, Command | ✅ Estable |
+| Code Quality & SonarQube | `docs/skills/code_quality_sonar.md` | code-smells, SonarQube, cognitive-complexity, technical-debt, quality-gates | ✅ Estable |
 
 **Leyenda de Estabilidad:**
 - ✅ Estable: APIs consistentes, ejemplos verificados
@@ -857,6 +858,7 @@ All project documentation:
 | [EXTERNAL_INTEGRATIONS.md](docs/skills/external_integrations.md) | Skill: OAuth2, external APIs & webhooks |
 | [PERFORMANCE_PROFILING.md](docs/skills/performance_profiling.md) | Skill: Python profiling, load testing, LLM perf optimization |
 | [DESIGN_PATTERNS.md](docs/skills/design_patterns.md) | Skill: GoF patterns in Python, GenAI patterns, anti-patterns |
+| [CODE_QUALITY_SONAR.md](docs/skills/code_quality_sonar.md) | Skill: Code smells, SonarQube metrics, quality gates, refactoring |
 | [README.md](README.md) | Project overview and quick start |
 | [src/examples/](src/examples/) | Reference implementations (agents, RAG, LLM, streaming) |
 | [docs/skills/examples/](docs/skills/examples/) | Skill code examples (FastAPI streaming, multi-agent, RAG) |

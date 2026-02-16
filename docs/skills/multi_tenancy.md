@@ -414,6 +414,38 @@ ALWAYS: Implement rate limiting and cost tracking per tenant
 
 ---
 
+## External Resources
+
+### Multi-Tenancy Architecture
+- **PostgreSQL Row-Level Security**: [postgresql.org/docs/current/ddl-rowsecurity.html](https://www.postgresql.org/docs/current/ddl-rowsecurity.html)
+    - *Best for*: Row-level tenant isolation in shared-schema approach
+- **SQLAlchemy Multi-Tenancy**: [docs.sqlalchemy.org/en/20/orm/extensions/horizontal_shard.html](https://docs.sqlalchemy.org/en/20/orm/extensions/horizontal_shard.html)
+    - *Best for*: Horizontal sharding across tenant databases
+- **django-tenants**: [django-tenants.readthedocs.io](https://django-tenants.readthedocs.io/)
+    - *Best for*: Schema-per-tenant in Django (PostgreSQL schemas)
+
+### Vector Store Isolation
+- **Pinecone Namespaces**: [docs.pinecone.io/guides/indexes/use-namespaces](https://docs.pinecone.io/guides/indexes/use-namespaces)
+    - *Best for*: Tenant isolation via namespaces in Pinecone
+- **Qdrant Collections**: [qdrant.tech/documentation/concepts/collections](https://qdrant.tech/documentation/concepts/collections/)
+    - *Best for*: Collection-per-tenant strategy in Qdrant
+- **Weaviate Multi-Tenancy**: [weaviate.io/developers/weaviate/manage-data/multi-tenancy](https://weaviate.io/developers/weaviate/manage-data/multi-tenancy)
+    - *Best for*: Native multi-tenancy support with tenant-aware sharding
+
+### Security & Compliance
+- **OWASP Multi-Tenancy Security**: [cheatsheetseries.owasp.org/cheatsheets/Multi-Tenancy_Security_Cheat_Sheet.html](https://cheatsheetseries.owasp.org/cheatsheets/Multi-Tenancy_Security_Cheat_Sheet.html)
+    - *Best for*: Security checklist for multi-tenant applications
+- **GDPR Data Isolation**: [gdpr-info.eu/art-25-gdpr](https://gdpr-info.eu/art-25-gdpr/)
+    - *Best for*: Data protection by design requirements
+
+### Rate Limiting & Cost
+- **Redis Rate Limiting Patterns**: [redis.io/glossary/rate-limiting](https://redis.io/glossary/rate-limiting)
+    - *Best for*: Token bucket and sliding window per-tenant rate limiting
+- **LiteLLM Budget Manager**: [docs.litellm.ai/docs/budget_manager](https://docs.litellm.ai/docs/budget_manager)
+    - *Best for*: Per-tenant LLM cost tracking and budget enforcement
+
+---
+
 ## Instructions for the Agent
 
 1. **Tenant ID Mandatory**: EVERY request must include tenant_id via header (`X-Tenant-ID`), JWT claim, or API key. Reject requests without tenant identification.

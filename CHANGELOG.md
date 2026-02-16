@@ -7,6 +7,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Code Quality & SonarQube skill (`docs/skills/code_quality_sonar.md`) — Code smells catalog (Python-specific), SonarQube/SonarCloud configuration, cognitive vs cyclomatic complexity, quality gates, CI/CD integration (GitHub Actions), radon/xenon/vulture/bandit tooling, refactoring decision trees
 - Performance Profiling skill (`docs/skills/performance_profiling.md`) — Python profiling (py-spy, scalene, memray), async event loop monitoring, LLM performance tracking, Locust load testing, PostgreSQL query analysis, pytest-benchmark examples
 - Design Patterns skill (`docs/skills/design_patterns.md`) — GoF patterns in Python (Adapter, Strategy, Factory, Decorator, Proxy, Observer, Command, Chain of Responsibility), GenAI-specific pattern decision trees, 8 code examples, anti-patterns
 - Disaster Recovery section in cloud infrastructure skill — RTO/RPO tiers, Route53 failover (Terraform), cross-region backup (K8s CronJob)
@@ -23,7 +24,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Enriched api_streaming.md from 370 to 942 lines — added 8 code examples (SSE LLM streaming, WebSocket chat with heartbeat, Redis rate limiter, dependency injection, background tasks, health checks, graceful shutdown, authenticated endpoints), 4 new anti-patterns
 - Enriched testing_quality.md from 469 to 1160 lines — added 7 code examples (conftest.py fixtures, async agent testing, RAGAS evaluation in CI, prompt snapshot testing, testcontainers, authenticated endpoint testing), 4 new anti-patterns, CI quality gate configuration
 - Expanded cloud infrastructure skill from 425 to 898 lines
-- Updated skill count from 15 to 26 in documentation
+- Updated skill count from 15 to 27 in documentation
 - Registered Performance Profiling in CLAUDE.md (table + documentation index + global CLAUDE.md)
 
 ### Fixed
